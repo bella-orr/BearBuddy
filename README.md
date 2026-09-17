@@ -52,6 +52,7 @@ The technologies planned for this project include:
 BearBuddy is being developed as part of the **University of Cincinnati Senior Design Capstone Project (2026–2027)**.
 
 | **Team Member** | **Role** |
+|---|---|
 | Ella Parsons | Project Manager |
 | Brennan Gilmore | Networking and Systems Developer |
 | Beeplop Poudel | Cybersecurity and Backend Developer |
