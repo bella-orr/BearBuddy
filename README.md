@@ -75,6 +75,6 @@ Security and responsible data handling are important considerations in BearBuddy
 - Testing will use synthetic data where possible.
 - The application will follow relevant university policies and ethical development practices.
 
-## 📄 Academic Project
+## Academic Project
 
 BearBuddy is being developed for the **University of Cincinnati's Senior Design Capstone course 2026/2027**.
