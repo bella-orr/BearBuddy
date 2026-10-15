@@ -18,3 +18,20 @@ CREATE TABLE dbo.users(
 
 );
 GO
+
+-- Table: class_schedule
+CREATE TABLE dbo.class_schedule (
+    schedule_id INT IDENTITY(1,1) PRIMARY KEY,
+    user_id INT NOT NULL,
+    course_name VARCHAR(255) NOT NULL,
+    building VARCHAR(255),
+    room VARCHAR(100),
+    meeting_days VARCHAR(100),
+    start_time TIME,
+    end_time TIME,
+
+    CONSTRAINT FK_ClassSchedule_User
+        FOREIGN KEY (user_id)
+        REFERENCES dbo.users(user_id)
+);
+GO
