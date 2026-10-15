@@ -35,3 +35,21 @@ CREATE TABLE dbo.class_schedule (
         REFERENCES dbo.users(user_id)
 );
 GO
+
+
+-- Table: personal_event
+CREATE TABLE dbo.personal_event (
+    event_id INT IDENTITY(1,1) PRIMARY KEY,
+    user_id INT NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    description VARCHAR(MAX),
+    type VARCHAR(100),
+    start_time DATETIME2 NOT NULL,
+    end_time DATETIME2 NOT NULL,
+    location VARCHAR(255),
+
+    CONSTRAINT FK_PersonalEvent_User
+        FOREIGN KEY (user_id)
+        REFERENCES dbo.users(user_id)
+);
+GO
