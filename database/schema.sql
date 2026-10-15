@@ -53,3 +53,15 @@ CREATE TABLE dbo.personal_event (
         REFERENCES dbo.users(user_id)
 );
 GO
+
+
+-- Table: campus_location
+CREATE TABLE dbo.campus_location (
+    location_id INT IDENTITY(1,1) PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    building VARCHAR(255),
+    latitude DECIMAL(10,7) NOT NULL,
+    longitude DECIMAL(10,7) NOT NULL
+);
+GO
+
