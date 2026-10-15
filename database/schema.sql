@@ -88,3 +88,18 @@ CREATE TABLE dbo.obstacle_report (
 GO
 
 
+-- Table: saved_account (for password management)
+CREATE TABLE dbo.saved_account (
+    saved_account_id INT IDENTITY(1,1) PRIMARY KEY,
+    user_id INT NOT NULL,
+    website_name VARCHAR(255) NOT NULL,
+    website_url VARCHAR(2048),
+    username VARCHAR(255) NOT NULL,
+    encrypted_password VARBINARY(MAX) NOT NULL,
+
+    CONSTRAINT FK_SavedAccount_User
+        FOREIGN KEY (user_id)
+        REFERENCES dbo.users(user_id)
+);
+GO
+
