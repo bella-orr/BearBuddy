@@ -65,3 +65,26 @@ CREATE TABLE dbo.campus_location (
 );
 GO
 
+
+-- Table: obstacle_report
+CREATE TABLE dbo.obstacle_report (
+    report_id INT IDENTITY(1,1) PRIMARY KEY,
+    user_id INT NOT NULL,
+    location_id INT NOT NULL,
+    obstacle_type VARCHAR(100) NOT NULL,
+    description VARCHAR(MAX),
+    reported_at DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+    expired_at DATETIME2,
+    status VARCHAR(50) NOT NULL DEFAULT 'active',
+
+    CONSTRAINT FK_ObstacleReport_User
+        FOREIGN KEY (user_id)
+        REFERENCES dbo.users(user_id),
+
+    CONSTRAINT FK_ObstacleReport_Location
+        FOREIGN KEY (location_id)
+        REFERENCES dbo.campus_location(location_id)
+);
+GO
+
+
