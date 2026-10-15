@@ -1,1 +1,94 @@
+BearBuddy Documentation - As of Week 10/11 - 10/17
 
+1. Purpose
+
+This document summarizes the BearBuddy team's progress as of October 15, 2026. It covers the current ERD draft, API research, security considerations, and project organization. The goal is to keep track of the work completed so far and identify questions that still need to be addressed. Items discussed in the project research are not considered final decisions unless the team has confirmed them.
+
+2. Existing Database Design
+
+The team has created a draft entity-relationship diagram (ERD) for BearBuddy. The diagram currently includes six entities.
+
+- User: User ID, email, password hash, first name, last name, display name, and account creation date and time.
+- Obstacle_Report: Report ID, user ID, location ID, obstacle type, description, reported date and time, expiration date and time, and status.
+- Campus_Location: Location ID, name, building, latitude, and longitude.
+- Class_Schedule: Schedule ID, user ID, course name, building, room, meeting days, start time, and end time.
+- Personal_Event: Event ID, user ID, title, description, type, start time, end time, and location.
+- Saved_Account: Saved account ID, user ID, website name, website URL, username, and encrypted password.
+
+The diagram connects users to their class schedules, personal events, saved accounts, and obstacle reports. Obstacle reports are also connected to campus locations.
+
+Items to Review in the ERD
+
+A few parts of the current diagram need to be reviewed before the database design is finalized.
+
+- Naming consistency: Some fields appear to have spelling or formatting issues, including `exprired_at` and `saved_account-id`. The team needs to confirm the intended names and make them consistent.
+- Authentication: The team should determine whether a locally stored password hash is necessary if BearBuddy uses UC single sign-on.
+- Saved accounts: If saving website credentials remains part of the project, the team will need to carefully evaluate how those credentials would be protected.
+- Obstacle reports: The team needs to define the available report statuses and determine how and when reports should expire.
+- Location relationships: The team should decide whether class schedules and personal events should reference the existing `Campus_Location` entity instead of storing location information separately.
+
+These are issues identified in the current draft. They have not necessarily been resolved, and the diagram may change as the team reviews the design.
+
+3. API Research
+
+The team has also put together an API research document covering possible tools for mapping, navigation, calendars, location services, authentication, and security.
+
+Mapping and Navigation
+
+The current research compares Google Maps Platform and Azure Maps as potential options for BearBuddy's campus navigation features.
+
+Google Maps Platform is identified as an option worth exploring further because its routing capabilities and Navigation SDK could support the project's navigation goals. However, standard mapping services would not automatically account for obstacles submitted by BearBuddy users. The application would need its own logic to incorporate reports about construction, blocked sidewalks, and other campus conditions.
+
+Before choosing a provider, the team still needs to look into pricing, React Native compatibility, routing accuracy around UC, API usage limits, API key security, location privacy, and provider requirements.
+
+Current status: Google Maps Platform is recommended for further evaluation in the research document, but the team has not documented a final provider selection or an implemented mapping feature.
+
+Calendar APIs
+
+The research also identifies Google Calendar API and Microsoft Graph Calendar API as possible options for calendar-related features.
+
+Both could be relevant if BearBuddy includes calendar integration. However, the available research does not provide a complete comparison of the two services or identify a final choice.
+
+Current status: Both APIs have been identified for consideration. More research is needed before the team can determine which option, if either, best fits the project.
+
+4. Security and Authentication
+
+Authentication and account security are important considerations for BearBuddy. Previous planning notes mention investigating UC single sign-on and technologies such as Microsoft Entra ID, OAuth 2.0, OpenID Connect (OIDC), PKCE, and MSAL.
+
+The team still needs to confirm which authentication setup UC supports for this type of project and whether any approvals are required. The available materials do not establish that a specific configuration has been approved or implemented.
+
+BearBuddy should not collect or store users' UC passwords. The team also needs to make sure API keys, access tokens, and other sensitive credentials are kept out of the GitHub repository.
+
+Current status: Authentication remains an area for research. The supported UC sign-in process and any associated requirements still need to be confirmed.
+
+5. Documentation and Team Collaboration
+
+The team uses GitHub to manage project files and track changes through version control. The GitHub Project is used to organize tasks and monitor progress. Microsoft Teams is also used for communication and sharing documents.
+
+Along with the team's existing chat and shared folder, the advisor-created Team 49 Teams space has been identified as another location for required project documents.
+
+For this reporting period, the documentation work focuses on organizing the information already available, keeping the existing design and research materials clear, and recording outstanding questions. Task statuses and documentation locations should continue to be updated as the project moves forward.
+
+6. Current Project Status
+
+The following table summarizes the status reflected in the materials reviewed for this report.
+
+       | Project Area |                                  | Current Status |
+       Project concept and planned technologies          Documented in existing project materials
+       Database design                                   ERD draft created; several design questions remain
+       Mapping APIs                                      Google Maps Platform and Azure Maps researched; further evaluation needed
+       Calendar APIs                                     Google Calendar API and Microsoft Graph identified; comparison is incomplete
+       UC single sign-on                                 Requires further research and confirmation
+       Planned feature implementation                    Implementation status has not been established by the materials reviewed
+       Documentation and collaboration                   GitHub, GitHub Projects, and Microsoft Teams are being used to organize project work
+
+7. Outstanding Items
+
+The following items still need attention as the team continues working on BearBuddy:
+
+1. Review the ERD with the team, correct naming inconsistencies, and confirm the database structure.
+2. Confirm which proposed features are included in the agreed project scope.
+3. Continue comparing mapping options and check their current documentation, pricing, and integration requirements.
+4. Finish comparing calendar APIs if calendar integration remains part of the project.
+5. Confirm UC's requirements and approval process for single sign-on.
+6. Keep GitHub Project statuses accurate and make sure required documents are uploaded to the appropriate Teams locations.
