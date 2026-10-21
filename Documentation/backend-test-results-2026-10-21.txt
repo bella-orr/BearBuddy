@@ -1,0 +1,38 @@
+BearBuddy Backend Tests - October 21, 2026
+
+Setup: SQL Server Express + PHP 8.4, localhost:8000
+
+Update: minimum changed to 10 characters and lockout to 3 failures.
+Test 7 rechecked on a local test copy: 15/15 PASS.
+
+Test accounts:
+  alice@test.com   AliceTestPassword1
+  bob@test.com     BobTestPassword22
+  carol@test.com   CarolTestPassword3 (deleted)
+
+Results: 24/24 PASS
+
+1. Short password rejected
+2. Breached password rejected
+3. Register
+4. Duplicate email rejected
+5. Wrong password rejected
+6. Login
+7. Lockout after 3 failures
+8. Logout
+9. Delete account
+10. Save password
+11. Reuse blocked
+12. View password
+13. Reuse is per student
+14. Second student registers
+15. Students can't access each other's data
+16. Class conflict found
+17. Add event
+18. Location search
+19. Report obstacle
+20. Resolve obstacle
+21. SQL injection stored as text
+22. Passwords hashed (Argon2id)
+23. Saved passwords encrypted
+24. Deleted account leaves no rows
