@@ -7,7 +7,9 @@ define('HASH_TYPE', defined('PASSWORD_ARGON2ID') ? PASSWORD_ARGON2ID : PASSWORD_
 function checkBreaches($password) {
     $hash = strtoupper(sha1($password));
     $options = ['http' => ['header' => "Add-Padding: true\r\nUser-Agent: BearBuddy-UC-capstone\r\n", 'timeout' => 5]];
-    $response = file_get_contents('https://api.pwnedpasswords.com/range/' . substr($hash, 0, 5), false, stream_context_create($options));
+    for ($try = 1; $try <= 3; $try++) {
+        $response = file_get_contents('https://api.pwnedpasswords.com/range/' . substr($hash, 0, 5), false, stream_context_create($options));
+        if ($response !== false) break; }
     if ($response === false) return null;
 
     foreach (explode("\n", $response) as $line) {
@@ -18,19 +20,30 @@ function checkBreaches($password) {
 function checkLoginPassword($password) {
     if (strlen($password) < MIN_PASSWORD_LENGTH) {
         return 'Use at least ' . MIN_PASSWORD_LENGTH . ' characters. A few random words works well.'; }
+    if (!preg_match('/[0-9]/', $password) || !preg_match('/[^a-zA-Z0-9]/', $password)) {
+        return 'Include at least one number and one symbol.'; }
 
     $breaches = checkBreaches($password);
+    if ($breaches === null) return 'The breach check is not responding. Try again in a minute.';
     if ($breaches > 0) return "That password has appeared in $breaches known data breaches. Choose a different one.";
     return null; }
 
+// Failed logins are saved in backend/storage files, not in the database.
+function getAttemptsFile() {
+    return __DIR__ . '/../storage/' . md5($_SERVER['REMOTE_ADDR']) . '.json'; }
+
 function checkLockout() {
-    if (($_SESSION['failed_logins'] ?? 0) >= MAX_FAILED_ATTEMPTS && time() - $_SESSION['last_failed_login'] < LOCKOUT_MINUTES * 60) {
+    $attempts = file_exists(getAttemptsFile()) ? json_decode(file_get_contents(getAttemptsFile()), true) : [];
+    if (($attempts['failed_logins'] ?? 0) >= MAX_FAILED_ATTEMPTS && time() - $attempts['last_failed_login'] < LOCKOUT_MINUTES * 60) {
         sendError(429, 'Too many failed attempts. Wait ' . LOCKOUT_MINUTES . ' minutes and try again.'); }}
 
 function addFailedAttempt() {
-    if (time() - ($_SESSION['last_failed_login'] ?? 0) >= LOCKOUT_MINUTES * 60) $_SESSION['failed_logins'] = 0;
-    $_SESSION['failed_logins'] = ($_SESSION['failed_logins'] ?? 0) + 1;
-    $_SESSION['last_failed_login'] = time(); }
+    $attempts = file_exists(getAttemptsFile()) ? json_decode(file_get_contents(getAttemptsFile()), true) : [];
+    if (time() - ($attempts['last_failed_login'] ?? 0) >= LOCKOUT_MINUTES * 60) $attempts['failed_logins'] = 0;
+    $attempts['failed_logins'] = ($attempts['failed_logins'] ?? 0) + 1;
+    $attempts['last_failed_login'] = time();
+    if (!is_dir(__DIR__ . '/../storage')) mkdir(__DIR__ . '/../storage');
+    file_put_contents(getAttemptsFile(), json_encode($attempts)); }
 
 function getEncryptionKey() {
     $key = base64_decode(getSetting('APP_ENCRYPTION_KEY', ''));
@@ -49,6 +62,7 @@ function decryptPassword($hex) {
     if ($password === false) throw new Exception('A saved password could not be decrypted.');
     return $password; }
 
+// Reads dbo.saved_account for this student and decrypts each password to compare.
 function isPasswordReused($userId, $password, $skipId = null) {
     foreach (getAccountsForUser($userId) as $account) {
         if ($account['saved_account_id'] != $skipId && decryptPassword($account['encrypted_password']) === $password) return true;}

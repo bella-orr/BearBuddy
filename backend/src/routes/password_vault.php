@@ -1,5 +1,6 @@
 <?php
 // encrypted_password is VARBINARY. It is read and written as hex text with CONVERT(..., 2).
+// Reads dbo.saved_account rows for one student.
 function getAccountsForUser($userId, $accountId = null) {
     $sql = 'SELECT saved_account_id, website_name, website_url, username,
                    CONVERT(VARCHAR(MAX), encrypted_password, 2) AS encrypted_password
@@ -33,6 +34,7 @@ function getSavedAccount($accountId) {
     unset($account['encrypted_password']);
     sendResponse(200, ['account' => $account]);}
 
+// Adds a row to dbo.saved_account with the password encrypted.
 function addSavedAccount() {
     $userId = requireLogin();
     $data = getRequestData();
@@ -46,6 +48,7 @@ function addSavedAccount() {
         array_merge([$userId], $account, [encryptPassword($password)]));
     sendResponse(201, ['saved_account_id' => getNewId()] + $check);}
 
+// Updates a dbo.saved_account row. The password only changes if a new one is sent.
 function updateSavedAccount($accountId) {
     $userId = requireLogin();
     findSavedAccount($userId, $accountId);
@@ -63,6 +66,7 @@ function updateSavedAccount($accountId) {
         array_merge($account, [$accountId, $userId]));
     sendResponse(200, ['updated' => true] + $check);}
 
+// Deletes a dbo.saved_account row.
 function deleteSavedAccount($accountId) {
     $userId = requireLogin();
     findSavedAccount($userId, $accountId);

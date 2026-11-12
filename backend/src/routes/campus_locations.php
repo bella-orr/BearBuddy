@@ -1,4 +1,5 @@
 <?php
+// Reads dbo.campus_location. Nothing in the app adds locations; they are entered in SQL Server directly.
 function getLocations() {
     requireLogin();
     $search = trim($_GET['search'] ?? '');

@@ -13,6 +13,7 @@ function getSetting($name, $default = null) {
     global $config;
     return empty($config[$name]) ? $default : $config[$name];}
 
+// Opens one connection to the SQL Server database, using the DB_ settings in .env.
 function getConnection() {
     static $conn = null;
     if ($conn) return $conn;
@@ -28,9 +29,11 @@ function getConnection() {
     $conn->setAttribute(PDO::SQLSRV_ATTR_FETCHES_NUMERIC_TYPE, true);
     return $conn; }
 
+// Every query goes through here. Use ? placeholders for values, never put them straight into the SQL.
 function runQuery($sql, $params = []) {
     $stmt = getConnection()->prepare($sql);
     $stmt->execute($params);
     return $stmt;}
+// Returns the id of the row just inserted.
 function getNewId() {
     return (int) getConnection()->lastInsertId(); }

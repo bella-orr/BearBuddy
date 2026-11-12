@@ -1,4 +1,5 @@
 <?php
+// Reads dbo.class_schedule rows for one student.
 function getClassRows($userId, $classId = null) {
     $sql = 'SELECT schedule_id, course_name, building, room, meeting_days,
                    CONVERT(VARCHAR(5), start_time, 108) AS start_time,
@@ -29,6 +30,7 @@ function getClassFromRequest() {
 function getClasses() {
     sendResponse(200, ['classes' => getClassRows(requireLogin())]);}
 
+// Adds a row to dbo.class_schedule.
 function addClass() {
     $userId = requireLogin();
     $class = getClassFromRequest();
@@ -36,6 +38,7 @@ function addClass() {
               VALUES (?, ?, ?, ?, ?, ?, ?)', array_merge([$userId], $class));
     sendResponse(201, ['class' => findClass($userId, getNewId())]); }
 
+// Updates a dbo.class_schedule row.
 function updateClass($classId) {
     $userId = requireLogin();
     findClass($userId, $classId);
@@ -45,6 +48,7 @@ function updateClass($classId) {
               WHERE schedule_id = ? AND user_id = ?', array_merge($class, [$classId, $userId]));
     sendResponse(200, ['class' => findClass($userId, $classId)]); }
 
+// Deletes a dbo.class_schedule row.
 function deleteClass($classId) {
     $userId = requireLogin();
     findClass($userId, $classId);
