@@ -1,7 +1,9 @@
 <?php
+// Reads one row from dbo.users (never returns password_hash).
 function findUser($userId) {
     return runQuery('SELECT user_id, email, first_name, last_name, display_name FROM dbo.users WHERE user_id = ?', [$userId])->fetch(); }
 
+// Reads password_hash from dbo.users.
 function isCorrectPassword($userId, $password) {
     $user = runQuery('SELECT password_hash FROM dbo.users WHERE user_id = ?', [$userId])->fetch();
     return $user && password_verify($password, $user['password_hash']); }
@@ -10,6 +12,7 @@ function startUserSession($userId) {
     session_regenerate_id(true);
     $_SESSION = ['user_id' => $userId]; }
 
+// Adds a row to dbo.users. Emails are saved in lowercase.
 function register() {
     $data = getRequestData();
     $email = strtolower(trim($data['email'] ?? ''));
@@ -34,6 +37,7 @@ function register() {
     startUserSession($userId);
     sendResponse(201, ['user' => findUser($userId)]); }
 
+// Reads dbo.users by email.
 function login() {
     $data = getRequestData();
     $email = strtolower(trim($data['email'] ?? ''));
@@ -63,6 +67,7 @@ function getCurrentUser() {
 
     sendResponse(200, ['user' => $user]); }
 
+// Updates the names in dbo.users.
 function updateProfile() {
     $userId = requireLogin();
     $data = getRequestData();
@@ -75,6 +80,7 @@ function updateProfile() {
 
     sendResponse(200, ['user' => findUser($userId)]); }
 
+// Updates password_hash in dbo.users.
 function changePassword() {
     $userId = requireLogin();
     $data = getRequestData();
@@ -90,6 +96,7 @@ function changePassword() {
     startUserSession($userId);
     sendResponse(200, ['password_changed' => true]);}
 
+// Deletes the student's rows from every table, then dbo.users, all in one transaction.
 function deleteAccount() {
     $userId = requireLogin();
     $data = getRequestData();

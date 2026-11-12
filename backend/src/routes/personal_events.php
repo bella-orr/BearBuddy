@@ -1,4 +1,5 @@
 <?php
+// Reads dbo.personal_event rows for one student.
 function getEventRows($userId, $eventId = null) {
     $sql = 'SELECT event_id, title, description, type,
                    CONVERT(VARCHAR(19), start_time, 120) AS start_time,
@@ -29,6 +30,7 @@ function getEventFromRequest() {
 function getEvents() {
     sendResponse(200, ['events' => getEventRows(requireLogin())]);}
 
+// Adds a row to dbo.personal_event.
 function addEvent() {
     $userId = requireLogin();
     $event = getEventFromRequest();
@@ -36,6 +38,7 @@ function addEvent() {
               VALUES (?, ?, ?, ?, ?, ?, ?)', array_merge([$userId], $event));
     sendResponse(201, ['event' => findEvent($userId, getNewId())]);}
 
+// Updates a dbo.personal_event row.
 function updateEvent($eventId) {
     $userId = requireLogin();
     findEvent($userId, $eventId);
@@ -45,6 +48,7 @@ function updateEvent($eventId) {
               WHERE event_id = ? AND user_id = ?', array_merge($event, [$eventId, $userId]));
     sendResponse(200, ['event' => findEvent($userId, $eventId)]);}
 
+// Deletes a dbo.personal_event row.
 function deleteEvent($eventId) {
     $userId = requireLogin();
     findEvent($userId, $eventId);

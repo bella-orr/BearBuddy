@@ -1,4 +1,5 @@
 <?php
+// Reads dbo.obstacle_report joined with dbo.campus_location for the location name.
 function getObstacleRows($userId, $where, $params = []) {
     $sql = 'SELECT r.report_id, r.location_id, l.name AS location_name, l.latitude, l.longitude,
                    r.obstacle_type, r.description,
@@ -15,11 +16,13 @@ function findMyObstacle($userId, $reportId) {
     if (!$report) sendError(404, 'Report not found.');
     return $report; }
 
+// Only shows reports that are active and not past expired_at.
 function getObstacles() {
     $userId = requireLogin();
     $where = "r.status = 'active' AND (r.expired_at IS NULL OR r.expired_at > SYSDATETIME())";
     sendResponse(200, ['obstacles' => getObstacleRows($userId, $where)]);}
 
+// Adds a row to dbo.obstacle_report. expired_at is set 72 hours ahead.
 function addObstacle() {
     $userId = requireLogin();
     $data = getRequestData();
@@ -37,6 +40,7 @@ function addObstacle() {
         [$userId, $locationId, $obstacleType, $description]);
     sendResponse(201, ['obstacle' => findMyObstacle($userId, getNewId())]); }
 
+// Sets status to 'resolved' in dbo.obstacle_report.
 function updateObstacleStatus($reportId) {
     $userId = requireLogin();
     findMyObstacle($userId, $reportId);
