@@ -3,20 +3,46 @@ import { useNavigate } from 'react-router-dom';
 import { getStoredSession } from '../services/authService';
 import { ROUTES } from '../constants/routes';
 
-export default function TodayPage() {
+export default function TodayPage({ darkMode }) {
   const navigate = useNavigate();
-  const [tasks, setTasks] = useState(() => {
+  
+  // Dynamic time-based greeting (Morning / Afternoon / Evening / Night)
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Morning';
+    if (hour < 17) return 'Afternoon';
+    if (hour < 21) return 'Evening';
+    return 'Night';
+  };
+
+  // Pull full email prefix (e.g., poudelbp or poudel.bee) and capitalize the first letter
+  const session = getStoredSession();
+  const rawEmail = session?.user?.email || session?.email || 'poudelbp@mail.uc.edu';
+  const emailPrefix = rawEmail.split('@')[0];
+  const capitalizedUser = emailPrefix.charAt(0).toUpperCase() + emailPrefix.slice(1);
+
+  // Load events from localStorage (synced with Schedule / Canvas page)
+  const [syncedEvents, setSyncedEvents] = useState([]);
+  const [customTasks, setCustomTasks] = useState(() => {
     const saved = localStorage.getItem('bearbuddy_today_tasks');
-    return saved ? JSON.parse(saved) : [
-      { id: 1, title: 'Database Systems', location: 'Baldwin Hall · Room 544', time: '10:30 AM', note: '4 min walk from previous class' },
-      { id: 2, title: 'Senior Design I', location: 'Rhodes Hall · Room 801', time: '1:00 PM', note: '5 min walk from previous class' }
-    ];
+    return saved ? JSON.parse(saved) : [];
   });
   const [inputVal, setInputVal] = useState('');
 
   useEffect(() => {
-    localStorage.setItem('bearbuddy_today_tasks', JSON.stringify(tasks));
-  }, [tasks]);
+    const storedEvents = localStorage.getItem('bearbuddy_canvas_events');
+    if (storedEvents) {
+      try {
+        setSyncedEvents(JSON.parse(storedEvents));
+      } catch (e) {
+        setSyncedEvents([]);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('bearbuddy_today_tasks', JSON.stringify(customTasks));
+  }, [customTasks]);
 
   const todayString = new Date().toLocaleDateString('en-US', {
     weekday: 'long',
@@ -24,103 +50,130 @@ export default function TodayPage() {
     day: 'numeric',
   }).toUpperCase();
 
-  const session = getStoredSession();
-  const rawEmail = session?.user?.email || session?.email || 'poudel.bee@gmail.com';
-  const cleanName = rawEmail.split('@')[0].split('.')[0];
-  const capitalizedUser = cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
+  const todayDateStr = new Date().toISOString().split('T')[0];
+  const todaysScheduleItems = syncedEvents.filter(ev => ev.dateStr === todayDateStr);
+  
+  const upNextItem = todaysScheduleItems.length > 0 ? todaysScheduleItems[0] : null;
+  const remainingScheduleItems = todaysScheduleItems.length > 1 ? todaysScheduleItems.slice(1) : [];
 
   const handleAddTask = (e) => {
     e.preventDefault();
     if (!inputVal.trim()) return;
-    setTasks([...tasks, { 
+    setCustomTasks([...customTasks, { 
       id: Date.now(), 
       title: inputVal.trim(), 
-      location: 'Custom Note / Event', 
+      location: 'Custom Note / Task', 
       time: 'Today', 
-      note: 'Added to your daily schedule' 
+      note: 'Added to your daily list' 
     }]);
     setInputVal('');
   };
 
   const handleDeleteTask = (id) => {
-    setTasks(tasks.filter((t) => t.id !== id));
+    setCustomTasks(customTasks.filter((t) => t.id !== id));
   };
 
+  const bg = darkMode ? '#121212' : '#ffffff';
+  const textColor = darkMode ? '#f3f4f6' : '#111827';
+  const cardBg = darkMode ? '#18181b' : '#f9fafb';
+  const borderColor = darkMode ? '#27272a' : '#e4e4e7';
+  const subText = darkMode ? '#a1a1aa' : '#6b7280';
+
   return (
-    <div style={styles.container}>
-      {/* Header Greeting */}
+    <div style={{ ...styles.container, backgroundColor: bg, color: textColor }}>
       <div style={styles.topHeader}>
         <span style={styles.dateLabel}>{todayString}</span>
-        <h1 style={styles.greeting}>Morning, {capitalizedUser}.</h1>
-        <p style={styles.subGreeting}>Your campus plan for today is ready.</p>
+        <h1 style={{ ...styles.greeting, color: textColor }}>
+          {getGreeting()}, {capitalizedUser}.
+        </h1>
+        <p style={{ ...styles.subGreeting, color: subText }}>Your campus plan for today is ready.</p>
       </div>
 
-      {/* Hero "Up Next" Card from Figma Design */}
-      <div style={styles.heroCard}>
-        <div style={styles.heroHeader}>
-          <span style={styles.upNextTag}>UP NEXT · 9:00 AM</span>
-          <span style={styles.timeBadge}>In 20 min</span>
-        </div>
-
-        <h2 style={styles.classTitle}>Algorithms</h2>
-        <p style={styles.classMeta}>CS 4071 · Old Chemistry · Room 601</p>
-
-        <div style={styles.walkMeta}>
-          <span style={styles.walkIcon}>👟</span>
-          <div>
-            <div style={styles.walkText}>Leave by 8:49 AM</div>
-            <div style={styles.walkSubText}>6 min walk + 5 min to settle in</div>
+      {upNextItem ? (
+        <div style={{ ...styles.heroCard, backgroundColor: cardBg, borderColor }}>
+          <div style={styles.heroHeader}>
+            <span style={{ ...styles.upNextTag, color: subText }}>UP NEXT · Today</span>
+            <span style={styles.timeBadge}>Active</span>
           </div>
-        </div>
 
-        <button 
-          onClick={() => navigate(ROUTES.MAP)} 
-          style={styles.heroButton}
-        >
-          Get to class <span style={{ marginLeft: '6px' }}>↗</span>
-        </button>
-      </div>
+          <h2 style={{ ...styles.classTitle, color: textColor }}>{upNextItem.title}</h2>
+          <p style={{ ...styles.classMeta, color: subText }}>{upNextItem.source || 'Canvas Schedule Item'}</p>
+
+          <div style={{ ...styles.walkMeta, backgroundColor: darkMode ? '#000000' : '#ffffff', borderColor }}>
+            <span style={styles.walkIcon}>🏫</span>
+            <div>
+              <div style={{ ...styles.walkText, color: textColor }}>Scheduled for Today</div>
+              <div style={{ ...styles.walkSubText, color: subText }}>Check campus map for location</div>
+            </div>
+          </div>
+
+          <button 
+            onClick={() => navigate(ROUTES.MAP)} 
+            style={styles.heroButton}
+          >
+            Get to class <span style={{ marginLeft: '6px' }}>↗</span>
+          </button>
+        </div>
+      ) : (
+        <div style={{ ...styles.heroCard, backgroundColor: cardBg, borderColor, textAlign: 'center', padding: '24px' }}>
+          <h3 style={{ margin: '0 0 6px 0', fontSize: '1.1rem', color: textColor }}>No classes up next</h3>
+          <p style={{ margin: 0, fontSize: '0.85rem', color: subText }}>Sync your Canvas schedule or add tasks below!</p>
+        </div>
+      )}
+
       <form onSubmit={handleAddTask} style={styles.form}>
         <input
           type="text"
           value={inputVal}
           onChange={(e) => setInputVal(e.target.value)}
           placeholder="Add class, note, or task..."
-          style={styles.input}
+          style={{ ...styles.input, backgroundColor: cardBg, color: textColor, borderColor }}
         />
         <button type="submit" style={styles.addButton}>Add</button>
       </form>
 
       <div style={styles.sectionHeader}>
-        <h2 style={styles.sectionTitle}>The rest of your day</h2>
+        <h2 style={{ ...styles.sectionTitle, color: textColor }}>The rest of your day</h2>
         <span style={styles.scheduleLink} onClick={() => navigate(ROUTES.SCHEDULE)}>
           Schedule →
         </span>
       </div>
 
       <div style={styles.listContainer}>
-        {tasks.length === 0 ? (
-          <div style={styles.emptyState}>
-            <p style={styles.emptyText}>No upcoming items. Type above to add one!</p>
+        {remainingScheduleItems.length === 0 && customTasks.length === 0 ? (
+          <div style={{ ...styles.emptyState, backgroundColor: cardBg, borderColor }}>
+            <p style={styles.emptyText}>No upcoming items. Type above or sync schedule!</p>
           </div>
         ) : (
-          tasks.map((task) => (
-            <div key={task.id} style={styles.taskCard}>
-              <div style={styles.timeCol}>{task.time}</div>
-              <div style={styles.infoCol}>
-                <div style={styles.taskTitle}>{task.title}</div>
-                <div style={styles.taskLocation}>{task.location}</div>
-                {task.note && <div style={styles.taskNote}>{task.note}</div>}
+          <>
+            {remainingScheduleItems.map((item) => (
+              <div key={item.id} style={{ ...styles.taskCard, backgroundColor: cardBg, borderColor }}>
+                <div style={{ ...styles.timeCol, color: textColor }}>Due</div>
+                <div style={styles.infoCol}>
+                  <div style={{ ...styles.taskTitle, color: textColor }}>{item.title}</div>
+                  <div style={styles.taskLocation}>{item.source || 'Canvas'}</div>
+                </div>
               </div>
-              <button 
-                onClick={() => handleDeleteTask(task.id)} 
-                style={styles.deleteButton}
-                aria-label="Delete item"
-              >
-                ✕
-              </button>
-            </div>
-          ))
+            ))}
+
+            {customTasks.map((task) => (
+              <div key={task.id} style={{ ...styles.taskCard, backgroundColor: cardBg, borderColor }}>
+                <div style={{ ...styles.timeCol, color: textColor }}>{task.time}</div>
+                <div style={styles.infoCol}>
+                  <div style={{ ...styles.taskTitle, color: textColor }}>{task.title}</div>
+                  <div style={styles.taskLocation}>{task.location}</div>
+                  {task.note && <div style={styles.taskNote}>{task.note}</div>}
+                </div>
+                <button 
+                  onClick={() => handleDeleteTask(task.id)} 
+                  style={styles.deleteButton}
+                  aria-label="Delete item"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+          </>
         )}
       </div>
     </div>
@@ -136,8 +189,6 @@ const styles = {
     padding: '16px',
     boxSizing: 'border-box',
     overflowY: 'auto',
-    backgroundColor: '#000000',
-    color: '#ffffff',
   },
   topHeader: {
     display: 'flex',
@@ -156,18 +207,16 @@ const styles = {
     fontSize: '1.45rem',
     fontWeight: '800',
     margin: '0 0 2px 0',
-    color: '#ffffff',
   },
   subGreeting: {
     fontSize: '0.82rem',
-    color: '#a1a1aa',
     margin: 0,
   },
   heroCard: {
-    backgroundColor: '#151518',
     borderRadius: '18px',
     padding: '16px',
-    border: '1px solid #27272a',
+    borderWidth: '1px',
+    borderStyle: 'solid',
     marginBottom: '18px',
     display: 'flex',
     flexDirection: 'column',
@@ -181,7 +230,6 @@ const styles = {
   upNextTag: {
     fontSize: '0.65rem',
     fontWeight: '700',
-    color: '#a1a1aa',
     letterSpacing: '0.5px',
   },
   timeBadge: {
@@ -196,22 +244,20 @@ const styles = {
     fontSize: '1.35rem',
     fontWeight: '800',
     margin: '0 0 2px 0',
-    color: '#ffffff',
   },
   classMeta: {
     fontSize: '0.8rem',
-    color: '#a1a1aa',
     margin: '0 0 14px 0',
   },
   walkMeta: {
     display: 'flex',
     alignItems: 'center',
     gap: '10px',
-    backgroundColor: '#000000',
     padding: '10px 12px',
     borderRadius: '12px',
     marginBottom: '14px',
-    border: '1px solid #27272a',
+    borderWidth: '1px',
+    borderStyle: 'solid',
   },
   walkIcon: {
     fontSize: '1rem',
@@ -219,11 +265,9 @@ const styles = {
   walkText: {
     fontSize: '0.8rem',
     fontWeight: '700',
-    color: '#ffffff',
   },
   walkSubText: {
     fontSize: '0.72rem',
-    color: '#71717a',
   },
   heroButton: {
     width: '100%',
@@ -247,11 +291,10 @@ const styles = {
   input: {
     flex: 1,
     height: '40px',
-    backgroundColor: '#151518',
-    border: '1px solid #27272a',
+    borderWidth: '1px',
+    borderStyle: 'solid',
     borderRadius: '10px',
     padding: '0 12px',
-    color: '#ffffff',
     fontSize: '0.85rem',
     outline: 'none',
   },
@@ -276,7 +319,6 @@ const styles = {
     fontSize: '0.95rem',
     fontWeight: '700',
     margin: 0,
-    color: '#ffffff',
   },
   scheduleLink: {
     fontSize: '0.78rem',
@@ -293,9 +335,9 @@ const styles = {
   emptyState: {
     padding: '20px',
     textAlign: 'center',
-    backgroundColor: '#151518',
     borderRadius: '14px',
-    border: '1px dashed #27272a',
+    borderWidth: '1px',
+    borderStyle: 'dashed',
   },
   emptyText: {
     color: '#71717a',
@@ -305,16 +347,15 @@ const styles = {
   taskCard: {
     display: 'flex',
     alignItems: 'center',
-    backgroundColor: '#151518',
     padding: '12px 14px',
     borderRadius: '14px',
-    border: '1px solid #27272a',
+    borderWidth: '1px',
+    borderStyle: 'solid',
   },
   timeCol: {
     width: '60px',
     fontSize: '0.78rem',
     fontWeight: '800',
-    color: '#ffffff',
   },
   infoCol: {
     flex: 1,
@@ -323,7 +364,6 @@ const styles = {
   taskTitle: {
     fontSize: '0.85rem',
     fontWeight: '700',
-    color: '#ffffff',
   },
   taskLocation: {
     fontSize: '0.75rem',
@@ -331,7 +371,7 @@ const styles = {
   },
   taskNote: {
     fontSize: '0.72rem',
-    color: '#e00122',
+    color: '#E00122',
     marginTop: '2px',
   },
   deleteButton: {

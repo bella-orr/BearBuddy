@@ -1,5 +1,5 @@
 // src/App.jsx
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { Navigate, Outlet, Route, Routes, useNavigate } from 'react-router-dom';
 
 import Header from './components/Header.jsx';
@@ -20,14 +20,40 @@ function RequireSession({ session }) {
   return session ? <Outlet /> : <Navigate to={ROUTES.WELCOME} replace />;
 }
 
-function AppShell({ session, onSignIn, onSignOut }) {
+function AppShell({ session, onSignIn, onSignOut, darkMode, setDarkMode, themeStyles }) {
   return (
-    <div className="app-shell">
+    <div className="app-shell" style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', background: themeStyles.background, color: themeStyles.color }}>
       <Header session={session} onSignIn={onSignIn} onSignOut={onSignOut} />
-      <main className="app-main">
+      
+      {/* Theme Toggle Button Row */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '6px 16px 2px 16px', background: themeStyles.background }}>
+        <button
+          onClick={() => setDarkMode(!darkMode)}
+          aria-label="Toggle Theme"
+          style={{
+            width: '36px',
+            height: '36px',
+            borderRadius: '50%',
+            background: darkMode ? '#27272a' : '#f4f4f5',
+            color: darkMode ? '#f3f4f6' : '#111827',
+            border: darkMode ? '1px solid #3f3f46' : '1px solid #d4d4d8',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            fontSize: '1rem',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+          }}
+          title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+        >
+          {darkMode ? "☀️" : "🌙"}
+        </button>
+      </div>
+
+      <main className="app-main" style={{ flex: 1, overflowY: 'auto', width: '100%', background: themeStyles.background, color: themeStyles.color }}>
         <Outlet />
       </main>
-      <Navbar />
+      <Navbar darkMode={darkMode} />
     </div>
   );
 }
@@ -36,6 +62,15 @@ export default function App() {
   const navigate = useNavigate();
   const [session, setSession] = useState(getStoredSession);
   const [loginOpen, setLoginOpen] = useState(false);
+  
+  const [darkMode, setDarkMode] = useState(() => {
+    const saved = localStorage.getItem("bearbuddy_dark_mode");
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+
+  useEffect(() => {
+    localStorage.setItem("bearbuddy_dark_mode", JSON.stringify(darkMode));
+  }, [darkMode]);
 
   const openLogin = useCallback(() => setLoginOpen(true), []);
   const closeLogin = useCallback(() => setLoginOpen(false), []);
@@ -56,9 +91,15 @@ export default function App() {
     navigate(ROUTES.WELCOME);
   };
 
+  // Unified theme object for background and text
+  const themeStyles = {
+    background: darkMode ? '#121212' : '#ffffff',
+    color: darkMode ? '#f3f4f6' : '#111827',
+  };
+
   return (
     <div style={frameStyles.browserWrapper}>
-      <div style={frameStyles.mobileFrame}>
+      <div style={{ ...frameStyles.mobileFrame, backgroundColor: themeStyles.background, color: themeStyles.color }}>
         <Routes>
           <Route
             path={ROUTES.WELCOME}
@@ -74,14 +115,14 @@ export default function App() {
           <Route element={<RequireSession session={session} />}>
             <Route
               element={
-                <AppShell session={session} onSignIn={openLogin} onSignOut={handleSignOut} />
+                <AppShell session={session} onSignIn={openLogin} onSignOut={handleSignOut} darkMode={darkMode} setDarkMode={setDarkMode} themeStyles={themeStyles} />
               }
             >
-              <Route path={ROUTES.TODAY} element={<TodayPage />} />
-              <Route path={ROUTES.MAP} element={<MapPage />} />
-              <Route path={ROUTES.SCHEDULE} element={<SchedulePage />} />
-              <Route path={ROUTES.ROUTE} element={<RoutePage />} />
-              <Route path={ROUTES.SECURITY} element={<SecurityPage />} />
+              <Route path={ROUTES.TODAY} element={<TodayPage darkMode={darkMode} />} />
+              <Route path={ROUTES.MAP} element={<MapPage darkMode={darkMode} />} />
+              <Route path={ROUTES.SCHEDULE} element={<SchedulePage darkMode={darkMode} setDarkMode={setDarkMode} />} />
+              <Route path={ROUTES.ROUTE} element={<RoutePage darkMode={darkMode} />} />
+              <Route path={ROUTES.SECURITY} element={<SecurityPage darkMode={darkMode} />} />
             </Route>
           </Route>
 
@@ -110,10 +151,8 @@ const frameStyles = {
     width: '100%',
     maxWidth: '410px',
     height: '840px',
-    backgroundColor: '#000000',
-    color: '#ffffff',
-    borderRadius: '24px',
     boxShadow: '0 25px 60px rgba(0, 0, 0, 0.6)',
+    borderRadius: '24px',
     display: 'flex',
     flexDirection: 'column',
     position: 'relative',
